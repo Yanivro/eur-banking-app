@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EUR Account — Banking App</title>
+<!-- installable as a home-screen web app -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="EUR Account">
+<meta name="theme-color" content="#072C2C">
+<link rel="manifest" href='data:application/manifest+json,{"name":"EUR Account","short_name":"EUR","display":"standalone","background_color":"%23F6F7F4","theme_color":"%23072C2C","start_url":"."}'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F7F4;
+    --surface:#FFFFFF;
+    --surface-2:#F1F2EC;
+    --primary:#072C2C;
+    --primary-2:#0B3F3D;
+    --ink:#0E1A1A;
+    --muted:#5E6E6A;
+    --faint:#94A19D;
+    --border:#E7E9E2;
+    --up:#16A34A;
+    --balance:#0F7A43;   /* deeper, richer green for the headline balance — more "private bank" than the lighter trend green */
+    --up-soft:#E7F6EC;
+    --down:#DC2626;
+    --down-soft:#FBEAEA;
+    --accent:#FF5F03;
+    --wise:#9FE870;
+    --radius:20px;
+    --font:'Ubuntu',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    --mono:'Ubuntu Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:var(--font);
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #18514E 0%, #0B2C2B 45%, #07201F 100%);
+    color:var(--ink);
+    display:grid;place-items:center;
+    min-height:100vh;padding:28px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- iPhone frame ---------- */
+  .device{
+    position:relative;width:393px;height:852px;flex:none;
+    background:#0A0A0A;border-radius:56px;
+    padding:11px;
+    box-shadow:0 0 0 2px #2a2a2a, 0 40px 90px -20px rgba(0,0,0,.7), inset 0 0 2px 2px rgba(255,255,255,.06);
+  }
+  .screen{
+    position:relative;width:100%;height:100%;
+    background:var(--bg);border-radius:46px;overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .island{
+    position:absolute;top:11px;left:50%;transform:translateX(-50%);
+    width:124px;height:36px;background:#000;border-radius:20px;z-index:60;
+  }
+  /* status bar */
+  .statusbar{
+    height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;
+    padding:18px 30px 0;font-weight:500;font-size:15px;z-index:50;color:var(--ink);
+  }
+  .statusbar .right{display:flex;align-items:center;gap:7px;}
+  .statusbar svg{display:block;}
+  .home-indicator{
+    position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+    width:134px;height:5px;border-radius:3px;background:rgba(0,0,0,.85);z-index:60;
+  }
+
+  /* ---------- scroll body ---------- */
+  .body{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .body::-webkit-scrollbar{display:none;}
+  .pad{padding:6px 20px 120px;}
+
+  /* ---------- app header ---------- */
+  .apphead{display:flex;align-items:center;justify-content:space-between;padding:4px 20px 10px;}
+  .who{display:flex;align-items:center;gap:11px;}
+  .avatar{
+    width:40px;height:40px;border-radius:50%;flex:none;
+    background:linear-gradient(135deg,#163C3A,#072C2C);
+    color:var(--wise);display:grid;place-items:center;font-weight:700;font-size:15px;letter-spacing:.02em;
+  }
+  .who .label{font-size:11px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;}
+  .who .name{font-size:15px;font-weight:500;line-height:1.1;}
+  .iconbtn{
+    width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--surface);
+    display:grid;place-items:center;color:var(--primary);cursor:pointer;
+  }
+
+  /* ---------- balance hero ---------- */
+  .hero{padding:8px 20px 0;}
+  .hero .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:500;}
+  .balance{
+    font-family:var(--mono);font-weight:700;letter-spacing:-0.02em;
+    font-size:46px;line-height:1.05;margin-top:6px;font-variant-numeric:tabular-nums;
+    color:var(--balance);   /* fixed deep green — balance is always positive ("money" colour) and never flips to red; the trend signal lives on the graph + delta pill */
+  }
+  .balance .cur{font-size:26px;vertical-align:6px;margin-right:2px;opacity:.5;}
+  .delta{
+    display:inline-flex;align-items:center;gap:6px;margin-top:10px;
+    padding:5px 11px 5px 9px;border-radius:999px;font-size:12.5px;font-weight:500;
+    font-variant-numeric:tabular-nums;
+  }
+  .delta.up{background:var(--up-soft);color:var(--up);}
+  .delta.down{background:var(--down-soft);color:var(--down);}
+  .delta .arrow{font-size:11px;}
+  .delta .period{color:var(--muted);font-weight:400;margin-left:2px;}
+
+  /* ---------- period toggle ---------- */
+  .segment{
+    display:flex;background:var(--surface-2);border-radius:14px;padding:4px;margin:18px 20px 0;gap:2px;
+    position:relative;
+  }
+  .seg-btn{
+    flex:1;border:none;background:transparent;font-family:var(--font);
+    font-size:13px;font-weight:500;color:var(--muted);padding:8px 0;border-radius:11px;
+    cursor:pointer;position:relative;z-index:2;transition:color .25s;letter-spacing:.01em;
+  }
+  .seg-btn.active{color:var(--primary);}
+  .seg-thumb{
+    position:absolute;top:4px;bottom:4px;width:calc((100% - 8px)/4);
+    background:var(--surface);border-radius:11px;z-index:1;
+    box-shadow:0 1px 3px rgba(7,44,44,.12);
+    transition:transform .32s cubic-bezier(.34,1.3,.5,1);
+  }
+
+  /* ---------- cards ---------- */
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    margin-top:16px;padding:18px;
+  }
+  .card .ctitle{font-size:13px;font-weight:500;color:var(--muted);letter-spacing:.02em;}
+  .card .crow{display:flex;align-items:center;justify-content:space-between;}
+
+  /* ---------- chart ---------- */
+  .chartwrap{margin:6px 20px 0;}
+  .chart-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:16px 14px 10px;margin-top:16px;
+  }
+  .chart-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px;}
+  .chart-head .lbl{font-size:12px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px;}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+  svg.chart{display:block;width:100%;height:auto;}
+  .axis-labels{display:flex;justify-content:space-between;padding:4px 6px 2px;}
+  .axis-labels span{font-size:10px;color:var(--faint);font-family:var(--mono);}
+
+  /* ---------- section title ---------- */
+  .sec-title{
+    display:flex;align-items:center;justify-content:space-between;
+    margin:22px 20px 2px;
+  }
+  .sec-title h2{font-size:16px;font-weight:700;letter-spacing:-0.01em;}
+  .sec-title a{font-size:13px;color:var(--primary);font-weight:500;cursor:pointer;}
+
+  /* ---------- transaction rows ---------- */
+  .tx-list{margin:6px 20px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .tx{
+    display:flex;align-items:center;gap:13px;padding:13px 16px;cursor:pointer;
+    border-top:1px solid var(--border);transition:background .15s;
+  }
+  .tx:first-child{border-top:none;}
+  .tx:active{background:var(--surface-2);}
+  .tx .ic{
+    width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-weight:700;font-size:15px;
+  }
+  .tx .ic.in{background:var(--up-soft);color:var(--up);}
+  .tx .ic.out{background:var(--surface-2);color:var(--primary);}
+  .tx .mid{flex:1;min-width:0;}
+  .tx .mid .t1{font-size:14.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tx .mid .t2{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tx .amt{text-align:right;flex:none;}
+  .tx .amt .a1{font-family:var(--mono);font-weight:700;font-size:14.5px;font-variant-numeric:tabular-nums;}
+  .tx .amt .a1.in{color:var(--up);}
+  .tx .amt .a2{font-size:11px;color:var(--faint);font-family:var(--mono);margin-top:2px;}
+
+  .month-head{
+    font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);
+    margin:20px 22px 2px;
+  }
+  .month-head:first-child{margin-top:6px;}
+
+  /* ---------- search ---------- */
+  .search{
+    display:flex;align-items:center;gap:9px;margin:4px 20px 0;
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:11px 14px;
+  }
+  .search input{flex:1;border:none;outline:none;font-family:var(--font);font-size:14px;background:transparent;color:var(--ink);}
+  .search input::placeholder{color:var(--faint);}
+
+  /* ---------- insights ---------- */
+  .stat-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:6px 20px 0;}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+  .stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);font-weight:500;}
+  .stat .v{font-family:var(--mono);font-weight:700;font-size:21px;margin-top:8px;font-variant-numeric:tabular-nums;letter-spacing:-0.01em;}
+  .stat .v.in{color:var(--up);}
+  .stat .v.out{color:var(--ink);}
+
+  .donut-card{display:flex;align-items:center;gap:18px;margin-top:16px;}
+  .donut-wrap{position:relative;flex:none;width:128px;height:128px;}
+  .donut-center{position:absolute;inset:0;display:grid;place-items:center;text-align:center;}
+  .donut-center .dc1{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);}
+  .donut-center .dc2{font-family:var(--mono);font-weight:700;font-size:17px;margin-top:2px;}
+  .legend{flex:1;display:flex;flex-direction:column;gap:11px;}
+  .leg{display:flex;align-items:center;gap:10px;}
+  .leg .sw{width:10px;height:10px;border-radius:3px;flex:none;}
+  .leg .ln{flex:1;font-size:13.5px;font-weight:500;}
+  .leg .lp{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;}
+
+  .catbar{margin-top:14px;}
+  .catbar .crow{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+  .catbar .cname{font-size:13.5px;font-weight:500;}
+  .catbar .camt{font-family:var(--mono);font-weight:700;font-size:13.5px;}
+  .track{height:8px;border-radius:6px;background:var(--surface-2);overflow:hidden;}
+  .track > i{display:block;height:100%;border-radius:6px;transition:width .9s cubic-bezier(.22,1,.36,1);}
+
+  /* ---------- card screen ---------- */
+  .bankcard{
+    position:relative;margin:8px 20px 0;border-radius:24px;overflow:hidden;
+    background:linear-gradient(135deg,#0E4A47 0%,#072C2C 55%,#04201F 100%);
+    color:#fff;padding:22px;height:212px;display:flex;flex-direction:column;justify-content:space-between;
+    box-shadow:0 22px 40px -18px rgba(7,44,44,.7);
+  }
+  .bankcard::after{
+    content:"";position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;
+    background:radial-gradient(circle, rgba(159,232,112,.28), transparent 70%);
+  }
+  .bankcard .brow{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:2;}
+  .bankcard .blogo{font-weight:700;letter-spacing:.02em;font-size:15px;}
+  .bankcard .chip{width:34px;height:26px;border-radius:6px;background:linear-gradient(135deg,#E8D9A8,#C9B069);}
+  .bankcard .bbal-k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.7;position:relative;z-index:2;}
+  .bankcard .bbal{font-family:var(--mono);font-weight:700;font-size:30px;margin-top:3px;position:relative;z-index:2;font-variant-numeric:tabular-nums;}
+  .bankcard .bnum{font-family:var(--mono);font-size:13px;letter-spacing:.12em;opacity:.85;position:relative;z-index:2;}
+  .bankcard .bname{font-size:12px;letter-spacing:.04em;opacity:.9;position:relative;z-index:2;margin-top:8px;display:flex;justify-content:space-between;}
+  .pill{font-size:10px;background:var(--wise);color:#072C2C;font-weight:700;padding:3px 8px;border-radius:6px;}
+
+  .detail-list{margin:16px 20px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .drow{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--border);cursor:pointer;}
+  .drow:first-child{border-top:none;}
+  .drow .dk{font-size:13px;color:var(--muted);}
+  .drow .dv{font-family:var(--mono);font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .drow .copy{color:var(--faint);}
+
+  .actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 20px 0;}
+  .act{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;}
+  .act .ab{width:54px;height:54px;border-radius:18px;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;color:var(--primary);transition:transform .15s,background .15s;}
+  .act:active .ab{transform:scale(.94);background:var(--surface-2);}
+  .act .al{font-size:11px;color:var(--muted);font-weight:500;}
+
+  /* ---------- bottom nav ---------- */
+  .tabbar{
+    position:absolute;left:0;right:0;bottom:0;height:84px;z-index:40;
+    background:rgba(255,255,255,.86);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border-top:1px solid var(--border);
+    display:flex;padding:8px 12px 0;
+  }
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:6px;border:none;background:none;cursor:pointer;color:var(--faint);}
+  .tab.active{color:var(--primary);}
+  .tab .tl{font-size:10.5px;font-weight:500;letter-spacing:.01em;}
+
+  /* page switching */
+  .page{display:none;animation:fade .35s ease;}
+  .page.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  .hint{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:22px;color:rgba(255,255,255,.55);
+    font-size:12px;letter-spacing:.02em;text-align:center;
+  }
+  .hint b{color:var(--wise);font-weight:500;}
+
+  /* ---------- currency pill ---------- */
+  .curpill{
+    display:inline-flex;align-items:center;gap:5px;height:40px;padding:0 13px;
+    border:1px solid var(--border);background:var(--surface);border-radius:999px;
+    font-family:var(--font);font-weight:700;font-size:13px;letter-spacing:.03em;color:var(--primary);
+    cursor:pointer;transition:background .15s;
+  }
+  .curpill:active{background:var(--surface-2);}
+  .curpill svg{opacity:.55;}
+
+  /* ---------- bottom sheet ---------- */
+  .sheet-scrim{
+    position:absolute;inset:0;z-index:80;background:rgba(8,28,28,.42);
+    backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+    opacity:0;pointer-events:none;transition:opacity .28s ease;
+    display:flex;align-items:flex-end;
+  }
+  .sheet-scrim.open{opacity:1;pointer-events:auto;}
+  .sheet{
+    width:100%;background:var(--bg);border-radius:28px 28px 46px 46px;
+    padding:10px 22px 30px;transform:translateY(102%);transition:transform .34s cubic-bezier(.32,1.05,.45,1);
+    max-height:86%;overflow-y:auto;scrollbar-width:none;
+  }
+  .sheet::-webkit-scrollbar{display:none;}
+  .sheet-scrim.open .sheet{transform:translateY(0);}
+  .sheet-grip{width:38px;height:5px;border-radius:3px;background:var(--border);margin:6px auto 14px;}
+  .sheet-head{display:flex;align-items:center;justify-content:space-between;}
+  .sheet-head h3{font-size:19px;font-weight:700;letter-spacing:-0.01em;}
+  .sheet-x{width:34px;height:34px;border-radius:50%;border:none;background:var(--surface-2);display:grid;place-items:center;color:var(--muted);cursor:pointer;}
+  .sheet-sub{font-size:12.5px;color:var(--muted);margin:6px 0 16px;line-height:1.45;max-width:42ch;}
+
+  .cur-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .cur-opt{
+    display:flex;align-items:center;gap:11px;padding:13px 14px;cursor:pointer;
+    background:var(--surface);border:1.5px solid var(--border);border-radius:16px;transition:border-color .15s,background .15s;
+  }
+  .cur-opt.active{border-color:var(--primary);background:#fff;}
+  .cur-opt .sym{
+    width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-family:var(--mono);font-weight:700;font-size:16px;background:var(--surface-2);color:var(--primary);
+  }
+  .cur-opt.active .sym{background:var(--primary);color:var(--wise);}
+  .cur-opt .cc{font-size:14px;font-weight:700;letter-spacing:.02em;line-height:1.1;}
+  .cur-opt .cn{font-size:11px;color:var(--muted);margin-top:1px;}
+
+  .rates-head{display:flex;align-items:baseline;justify-content:space-between;margin:22px 2px 10px;}
+  .rates-head span:first-child{font-size:13px;font-weight:700;letter-spacing:-0.01em;}
+  .rates-base{font-size:11px;color:var(--faint);font-family:var(--mono);letter-spacing:.02em;}
+  .rates-list{display:flex;flex-direction:column;gap:8px;}
+  .rate-row{
+    display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;padding:11px 14px;
+  }
+  .rate-row .rl{flex:1;display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:500;}
+  .rate-row .rl .rsym{font-family:var(--mono);font-weight:700;color:var(--primary);width:18px;text-align:center;}
+  .rate-row input{
+    width:96px;text-align:right;font-family:var(--mono);font-weight:700;font-size:14px;
+    border:1px solid var(--border);border-radius:10px;padding:7px 10px;background:var(--bg);color:var(--ink);
+    outline:none;transition:border-color .15s;font-variant-numeric:tabular-nums;
+  }
+  .rate-row input:focus{border-color:var(--primary);}
+  .rate-row.locked input{opacity:.5;}
+  .rate-row .rl .lockwd{font-size:10px;color:var(--faint);font-weight:400;}
+
+  .sheet-actions{display:flex;gap:10px;margin-top:20px;}
+  .btn-ghost{flex:1;height:48px;border:1px solid var(--border);background:var(--surface);border-radius:14px;font-family:var(--font);font-weight:500;font-size:14px;color:var(--muted);cursor:pointer;}
+  .btn-ghost:active{background:var(--surface-2);}
+  .btn-solid{flex:2;height:48px;border:none;background:var(--primary);color:#fff;border-radius:14px;font-family:var(--font);font-weight:700;font-size:14px;letter-spacing:.02em;cursor:pointer;transition:transform .12s;}
+  .btn-solid:active{transform:scale(.98);}
+
+  /* ---------- real-phone mode ----------
+     When actually opened on a phone (not the desktop mock), drop the
+     simulated iPhone bezel so "Add to Home Screen" gives a true full-screen
+     app instead of a phone-inside-a-phone. The device frame stays for
+     desktop / the design canvas. */
+  @media (max-width: 480px){
+    body{ padding:0; display:block; background:var(--bg); }
+    .device{ width:100vw; height:100vh; height:100dvh; border-radius:0; padding:0; box-shadow:none; }
+    .screen{ border-radius:0; }
+    .island, .statusbar, .home-indicator, .hint{ display:none; }
+    .body{ padding-top:env(safe-area-inset-top); }
+    .tabbar{ height:calc(84px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); }
+  }
+</style>
+</head>
+<body>
+
+<div class="device">
+  <div class="island"></div>
+  <div class="screen">
+    <!-- status bar -->
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="right">
+        <svg width="18" height="12" viewBox="0 0 18 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="1" fill="currentColor"/><rect x="5" y="4.5" width="3" height="7.5" rx="1" fill="currentColor"/><rect x="10" y="2" width="3" height="10" rx="1" fill="currentColor"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor" opacity="0.35"/></svg>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 2.2c2.3 0 4.4.9 6 2.3l1.1-1.3C13.7 1.4 11.2.4 8.5.4S3.3 1.4 1.4 3.2L2.5 4.5c1.6-1.4 3.7-2.3 6-2.3z" fill="currentColor"/><path d="M8.5 5.6c1.3 0 2.5.5 3.4 1.3l1.1-1.3C11.8 4.4 10.2 3.8 8.5 3.8s-3.3.6-4.5 1.8l1.1 1.3c.9-.8 2.1-1.3 3.4-1.3z" fill="currentColor"/><path d="M8.5 8.8c.6 0 1.1.2 1.5.6l-1.5 1.8-1.5-1.8c.4-.4.9-.6 1.5-.6z" fill="currentColor"/></svg>
+        <svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="21" height="11" rx="3" stroke="currentColor" stroke-opacity="0.4" fill="none"/><rect x="2.5" y="2.5" width="17" height="8" rx="1.5" fill="currentColor"/><rect x="23.5" y="4" width="2" height="5" rx="1" fill="currentColor" fill-opacity="0.5"/></svg>
+      </span>
+    </div>
+
+    <div class="body" id="scrollbody">
+
+      <!-- ============ HOME ============ -->
+      <section class="page active" id="page-home">
+        <div class="apphead">
+          <div class="who">
+            <div class="avatar">YR</div>
+            <div>
+              <div class="label" id="whoBalLabel">EUR balance</div>
+              <div class="name">Yaniv Rozenblat</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px;">
+            <button class="curpill" id="curBtn" aria-label="Change display currency">
+              <span id="curPillCode">EUR</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <button class="iconbtn" aria-label="Notifications">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 1 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="hero">
+          <div class="eyebrow">Total balance</div>
+          <div class="balance" id="balanceNum">€0.00</div>
+          <div class="delta up" id="deltaChip">
+            <span class="arrow">▲</span><span id="deltaVal">€0.00</span>
+            <span class="period" id="deltaPeriod">· 30 days</span>
+          </div>
+        </div>
+
+        <div class="segment" id="segment">
+          <div class="seg-thumb" id="segThumb"></div>
+          <button class="seg-btn" data-days="7">7D</button>
+          <button class="seg-btn active" data-days="30">30D</button>
+          <button class="seg-btn" data-days="91">3M</button>
+          <button class="seg-btn" data-days="183">6M</button>
+        </div>
+
+        <div class="chartwrap">
+          <div class="chart-card">
+            <div class="chart-head">
+              <span class="lbl"><span class="dot" id="balDot" style="background:var(--up)"></span>Balance</span>
+              <span class="lbl" id="balRangeLbl" style="font-family:var(--mono);color:var(--faint);font-size:11px;"></span>
+            </div>
+            <svg class="chart" id="lineChart" viewBox="0 0 320 130" preserveAspectRatio="none"></svg>
+          </div>
+          <div class="chart-card">
+            <div class="chart-head">
+              <span class="lbl"><span class="dot" style="background:var(--accent)"></span>Money out</span>
+              <span class="lbl" id="spendTotalLbl" style="font-family:var(--mono);color:var(--ink);font-size:12px;font-weight:700;"></span>
+            </div>
+            <svg class="chart" id="barChart" viewBox="0 0 320 120" preserveAspectRatio="none"></svg>
+            <div class="axis-labels" id="barLabels"></div>
+          </div>
+        </div>
+
+        <div class="sec-title">
+          <h2>Recent activity</h2>
+          <a data-goto="activity">See all</a>
+        </div>
+        <div class="tx-list" id="recentList"></div>
+      </section>
+
+      <!-- ============ ACTIVITY ============ -->
+      <section class="page" id="page-activity">
+        <div class="apphead"><h2 style="font-size:22px;font-weight:700;letter-spacing:-0.02em;">Activity</h2></div>
+        <div class="search">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="searchInput" placeholder="Search transactions, people…">
+        </div>
+        <div id="activityList"></div>
+      </section>
+
+      <!-- ============ INSIGHTS ============ -->
+      <section class="page" id="page-insights">
+        <div class="apphead"><h2 style="font-size:22px;font-weight:700;letter-spacing:-0.02em;">Insights</h2></div>
+
+        <div class="segment" id="segment2">
+          <div class="seg-thumb" id="segThumb2"></div>
+          <button class="seg-btn" data-days="7">7D</button>
+          <button class="seg-btn active" data-days="30">30D</button>
+          <button class="seg-btn" data-days="91">3M</button>
+          <button class="seg-btn" data-days="183">6M</button>
+        </div>
+
+        <div class="stat-2">
+          <div class="stat"><div class="k">Money in</div><div class="v in" id="statIn">€0</div></div>
+          <div class="stat"><div class="k">Money out</div><div class="v out" id="statOut">€0</div></div>
+        </div>
+
+        <div class="card donut-card">
+          <div class="donut-wrap">
+            <svg viewBox="0 0 36 36" width="128" height="128" id="donut"></svg>
+            <div class="donut-center"><div><div class="dc1">Out</div><div class="dc2" id="donutTotal">€0</div></div></div>
+          </div>
+          <div class="legend" id="legend"></div>
+        </div>
+
+        <div class="sec-title"><h2>Where it went</h2></div>
+        <div class="card" id="catBars"></div>
+
+        <div class="sec-title"><h2>Top counterparties</h2></div>
+        <div class="tx-list" id="topCp"></div>
+      </section>
+
+      <!-- ============ CARD ============ -->
+      <section class="page" id="page-card">
+        <div class="apphead"><h2 style="font-size:22px;font-weight:700;letter-spacing:-0.02em;">Account</h2></div>
+
+        <div class="bankcard">
+          <div class="brow">
+            <span class="blogo">EUR · Multi-currency</span>
+            <span class="chip"></span>
+          </div>
+          <div>
+            <div class="bbal-k">Available balance</div>
+            <div class="bbal" id="cardBal">€0.00</div>
+          </div>
+          <div>
+            <div class="bnum">BE78&nbsp; 9056&nbsp; 9889&nbsp; 2986</div>
+            <div class="bname"><span>YANIV ROZENBLAT</span><span class="pill">EUR</span></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <div class="act"><div class="ab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div><span class="al">Send</span></div>
+          <div class="act"><div class="ab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></div><span class="al">Add</span></div>
+          <div class="act"><div class="ab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg></div><span class="al">Convert</span></div>
+          <div class="act"><div class="ab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div><span class="al">Details</span></div>
+        </div>
+
+        <div class="sec-title"><h2>Account details</h2></div>
+        <div class="detail-list">
+          <div class="drow"><span class="dk">Account holder</span><span class="dv">Yaniv Rozenblat</span></div>
+          <div class="drow"><span class="dk">IBAN</span><span class="dv">BE78 9056 9889 2986 <span class="copy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span></span></div>
+          <div class="drow"><span class="dk">Swift / BIC</span><span class="dv">TRWIBEB1XXX <span class="copy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span></span></div>
+          <div class="drow"><span class="dk">Bank</span><span class="dv">Wise — Belgium</span></div>
+          <div class="drow"><span class="dk">Statement period</span><span class="dv" id="stmtPeriod">—</span></div>
+        </div>
+
+        <div class="sec-title"><h2>This statement</h2></div>
+        <div class="stat-2" style="margin-top:6px;">
+          <div class="stat"><div class="k">Total in</div><div class="v in" id="cardTotalIn">€0</div></div>
+          <div class="stat"><div class="k">Total out</div><div class="v out" id="cardTotalOut">€0</div></div>
+        </div>
+      </section>
+
+    </div><!-- /body -->
+
+    <!-- bottom nav -->
+    <nav class="tabbar">
+      <button class="tab active" data-tab="home">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/></svg>
+        <span class="tl">Home</span>
+      </button>
+      <button class="tab" data-tab="activity">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 7 4-16 2 9h6"/></svg>
+        <span class="tl">Activity</span>
+      </button>
+      <button class="tab" data-tab="insights">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21H4a1 1 0 0 1-1-1V3"/><rect x="7" y="11" width="3" height="6" rx="1"/><rect x="13" y="7" width="3" height="10" rx="1"/><rect x="19" y="13" width="0" height="0"/></svg>
+        <span class="tl">Insights</span>
+      </button>
+      <button class="tab" data-tab="card">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        <span class="tl">Account</span>
+      </button>
+    </nav>
+
+    <!-- ============ CURRENCY SHEET ============ -->
+    <div class="sheet-scrim" id="curScrim">
+      <div class="sheet" id="curSheet">
+        <div class="sheet-grip"></div>
+        <div class="sheet-head">
+          <h3>Display currency</h3>
+          <button class="sheet-x" id="curClose" aria-label="Close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <p class="sheet-sub">Balances and transactions are stored in EUR and shown in your chosen currency.</p>
+
+        <div class="cur-grid" id="curGrid"></div>
+
+        <div class="rates-head">
+          <span>Conversion rates</span><span class="rates-base">per 1 EUR</span>
+        </div>
+        <div class="rates-list" id="ratesList"></div>
+
+        <div class="sheet-actions">
+          <button class="btn-ghost" id="ratesReset">Reset rates</button>
+          <button class="btn-solid" id="ratesSave">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+</div>
+
+<div class="hint">Your balance is today's money — it stays put. The <b>7D / 30D / 3M / 6M</b> toggle just changes how far back you look</div>
+
+<script>
+/* ---------------- real statement data (Wise EUR, Jun–Dec 2025) ---------------- */
+/* amount is signed; balance is the running balance AFTER the transaction (from statement) */
+const TX = [
+  {d:'2025-12-08', cp:'Yaniv Rozenblat',          amt:-220.00, bal:23567.47, ref:'TRANSFER-1799102344'},
+  {d:'2025-12-02', cp:'Yaniv Rozenblat',          amt:-750.00, bal:23787.47, ref:'TRANSFER-1799089221'},
+  {d:'2025-11-14', cp:'workshops.work B.V.',      amt: 2360.25, bal:24537.47, ref:'40031'},
+  {d:'2025-11-10', cp:'Yaniv Rozenblat',          amt:-450.00, bal:22177.22, ref:'TRANSFER-1792110556'},
+  {d:'2025-11-04', cp:'Yaniv Rozenblat',          amt:-700.00, bal:22627.22, ref:'TRANSFER-1787339102'},
+  {d:'2025-10-31', cp:'workshops.work B.V.',      amt: 1180.13, bal:23327.22, ref:'40030'},
+  {d:'2025-10-28', cp:'Yaniv Rozenblat',          amt:-480.00, bal:22147.09, ref:'TRANSFER-1780554123'},
+  {d:'2025-10-22', cp:'Yaniv Rozenblat',          amt:-750.00, bal:22627.09, ref:'TRANSFER-1774209338'},
+  {d:'2025-10-17', cp:'workshops.work B.V.',      amt: 2098.00, bal:23377.09, ref:'40029'},
+  {d:'2025-10-13', cp:'Yaniv Rozenblat',          amt:-550.00, bal:21279.09, ref:'TRANSFER-1764110987'},
+  {d:'2025-10-07', cp:'Yaniv Rozenblat',          amt:-750.00, bal:21829.09, ref:'TRANSFER-1757882109'},
+  {d:'2025-10-03', cp:'workshops.work B.V.',      amt: 2360.25, bal:22579.09, ref:'40028'},
+  {d:'2025-09-30', cp:'Yaniv Rozenblat',          amt:-240.00, bal:20218.84, ref:'TRANSFER-1749220118'},
+  {d:'2025-09-23', cp:'Yaniv Rozenblat',          amt:-700.00, bal:20458.84, ref:'TRANSFER-1738109445'},
+  {d:'2025-09-19', cp:'workshops.work B.V.',      amt: 1180.13, bal:21158.84, ref:'40027'},
+  {d:'2025-09-17', cp:'Yaniv Rozenblat',          amt:-750.00, bal:19978.71, ref:'TRANSFER-1729550113'},
+  {d:'2025-09-15', cp:'Patricia Correa Morrone',  amt:-680.10, bal:20728.71, ref:'TRANSFER-1726109334'},
+  {d:'2025-09-09', cp:'Yaniv Rozenblat',          amt:-750.00, bal:21408.81, ref:'TRANSFER-1715882001'},
+  {d:'2025-09-05', cp:'workshops.work B.V.',      amt: 2098.00, bal:22158.81, ref:'40026'},
+  {d:'2025-08-29', cp:'Arie Meir',                amt:-320.00, bal:20060.81, ref:'TRANSFER-1698220556'},
+  {d:'2025-08-26', cp:'Yaniv Rozenblat',          amt:-750.00, bal:20380.81, ref:'TRANSFER-1693550122'},
+  {d:'2025-08-22', cp:'workshops.work B.V.',      amt: 2360.25, bal:21130.81, ref:'40025'},
+  {d:'2025-08-12', cp:'Yaniv Rozenblat',          amt:-750.00, bal:18770.56, ref:'TRANSFER-1672990331'},
+  {d:'2025-08-08', cp:'workshops.work B.V.',      amt: 1180.13, bal:19520.56, ref:'40024'},
+  {d:'2025-08-06', cp:'Yaniv Rozenblat',          amt:-750.00, bal:18340.43, ref:'TRANSFER-1662232572'},
+  {d:'2025-08-01', cp:'Yaniv Rozenblat',          amt:-515.50, bal:19090.43, ref:'TRANSFER-1655109884'},
+  {d:'2025-07-29', cp:'Yaniv Rozenblat',          amt:-750.00, bal:19605.93, ref:'TRANSFER-1649882115'},
+  {d:'2025-07-25', cp:'workshops.work B.V.',      amt: 2098.00, bal:20355.93, ref:'40023'},
+  {d:'2025-07-23', cp:'Yaniv Rozenblat',          amt:-750.00, bal:18257.93, ref:'TRANSFER-1640303052'},
+  {d:'2025-07-21', cp:'Yaniv Rozenblat',          amt:-190.00, bal:19007.93, ref:'TRANSFER-1636110448'},
+  {d:'2025-07-15', cp:'Yaniv Rozenblat',          amt:-750.00, bal:19197.93, ref:'TRANSFER-1625990223'},
+  {d:'2025-07-11', cp:'workshops.work B.V.',      amt: 2360.25, bal:19947.93, ref:'40022'},
+  {d:'2025-07-07', cp:'Patricia Correa Morrone',  amt:-450.20, bal:17587.68, ref:'TRANSFER-1611550882'},
+  {d:'2025-07-01', cp:'Yaniv Rozenblat',          amt:-700.00, bal:18037.88, ref:'TRANSFER-1602339116'},
+  {d:'2025-06-27', cp:'workshops.work B.V.',      amt: 1180.13, bal:18737.88, ref:'40021'},
+  {d:'2025-06-25', cp:'Yaniv Rozenblat',          amt:-750.00, bal:17557.75, ref:'TRANSFER-1593440558'},
+  {d:'2025-06-20', cp:'Yaniv Rozenblat',          amt:-280.00, bal:18307.75, ref:'TRANSFER-1589220114'},
+  {d:'2025-06-16', cp:'Yaniv Rozenblat',          amt:-750.00, bal:18587.75, ref:'TRANSFER-1585770332'},
+  {d:'2025-06-13', cp:'workshops.work B.V.',      amt: 2098.00, bal:19337.75, ref:'40020'},
+  {d:'2025-06-10', cp:'Inna Levinson',            amt:-120.50, bal:17239.75, ref:'December retreat'},
+];
+
+const CURRENT_BALANCE = 23567.47;
+
+const parseD = s => new Date(s+'T00:00:00');
+const MS_DAY = 86400000;
+
+/* safe storage — sandboxed preview iframes throw on localStorage access,
+   which would otherwise halt the whole init script and leave every screen blank */
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:v; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+};
+
+/* ---- re-anchor dates so the most recent transaction always lands on TODAY,
+   reading the real current date at load, then shifting every other transaction
+   by the same offset (gaps preserved). Open it next month and it re-anchors. ---- */
+const ymd = dt => dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+const TARGET_LAST = ymd(new Date());   // today, in the viewer's local date
+(function reanchorDates(){
+  const origLast = TX.reduce((m,t)=> t.d>m ? t.d : m, TX[0].d);   // ISO strings compare correctly
+  // whole-day offset + local-component date math: timezone/DST-safe (toISOString would drift ±1 day)
+  const offDays = Math.round((parseD(TARGET_LAST) - parseD(origLast)) / MS_DAY);
+  TX.forEach(t=>{
+    const d = parseD(t.d);
+    t.d = ymd(new Date(d.getFullYear(), d.getMonth(), d.getDate()+offDays));
+  });
+})();
+
+/* ---- multi-currency: EUR is the base; rates convert FROM eur TO display currency.
+   Conversion table is locally saved & editable in the currency sheet. ---- */
+const CUR_META = {
+  EUR:{symbol:'€', locale:'en-IE', dec:2, name:'Euro'},
+  USD:{symbol:'$', locale:'en-US', dec:2, name:'US Dollar'},
+  THB:{symbol:'฿', locale:'th-TH', dec:0, name:'Thai Baht'},
+  ILS:{symbol:'₪', locale:'he-IL', dec:2, name:'Israeli Shekel'},
+};
+const DEFAULT_RATES = { EUR:1, USD:1.08, THB:38.5, ILS:4.05 };  // 1 EUR = …
+let RATES = (()=>{ try{ return {...DEFAULT_RATES, ...JSON.parse(store.get('bankRates','{}'))}; }catch(e){ return {...DEFAULT_RATES}; } })();
+let CURRENCY = store.get('bankCurrency','EUR');
+if(!CUR_META[CURRENCY]) CURRENCY='EUR';
+const rate = ()=> RATES[CURRENCY] || 1;
+
+/* ---- helpers ---- */
+// formats an EUR-base amount in the active display currency
+function eur(n,dec){
+  const m=CUR_META[CURRENCY];
+  const d = dec==null ? m.dec : dec;
+  return m.symbol+Math.abs(n*rate()).toLocaleString(m.locale,{minimumFractionDigits:d,maximumFractionDigits:d});
+}
+
+// category mapping
+function catOf(cp){
+  if(cp.includes('workshops')) return 'Income';
+  if(cp==='Yaniv Rozenblat')   return 'Self transfers';
+  if(cp.includes('Inna'))      return 'Retreats';
+  return 'Contractors';
+}
+const CAT_COLOR = {
+  'Self transfers':'#072C2C',
+  'Contractors':'#FF5F03',
+  'Retreats':'#16A34A',
+};
+
+// initials for avatar circles
+function initials(cp){
+  if(cp.includes('workshops')) return 'W';
+  return cp.split(' ').filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();
+}
+function shortDate(s){
+  const dt=parseD(s);
+  return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+}
+function monthKey(s){
+  const dt=parseD(s);
+  return dt.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+}
+
+const txAsc = [...TX].sort((a,b)=>parseD(a.d)-parseD(b.d));
+const txDesc = [...TX].sort((a,b)=>parseD(b.d)-parseD(a.d));
+const lastDate = parseD(txAsc[txAsc.length-1].d);
+
+/* ---------------- count-up animation ---------------- */
+function animateNumber(el, to){
+  const from = el._cur ?? 0;   // EUR base
+  el._cur = to;                // EUR base
+  const m = CUR_META[CURRENCY], r = rate();
+  const dur = 850, t0 = performance.now();
+  const ease = t => 1 - Math.pow(2, -10*t);
+  function frame(now){
+    let p = Math.min(1,(now-t0)/dur);
+    // snap to the exact target on the final frame — the easing curve never
+    // quite outputs 1.0, so without this the first count-up lands ~0.1% short
+    const v = (p>=1 ? to : (from + (to-from)*ease(p))) * r;
+    el.innerHTML = '<span class="cur">'+m.symbol+'</span>'+ Math.abs(v).toLocaleString(m.locale,{minimumFractionDigits:m.dec,maximumFractionDigits:m.dec});
+    if(p<1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* the per-period change (delta) is the number that actually differs between
+   7D/30D/3M/6M, so this is where the count animation lives on every switch */
+function animateDelta(el, toEur){
+  const from = el._cur ?? 0;   // EUR base
+  el._cur = toEur;             // EUR base
+  const m = CUR_META[CURRENCY], r = rate();
+  const dur = 650, t0 = performance.now();
+  const ease = t => 1 - Math.pow(2, -10*t);
+  function frame(now){
+    let p = Math.min(1,(now-t0)/dur);
+    const v = (p>=1 ? toEur : (from + (toEur-from)*ease(p))) * r;   // snap exact on final frame
+    el.textContent = m.symbol + Math.abs(v).toLocaleString(m.locale,{minimumFractionDigits:m.dec,maximumFractionDigits:m.dec});
+    if(p<1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---------------- period computation ---------------- */
+function windowData(days){
+  const start = new Date(lastDate.getTime() - days*MS_DAY);
+  const inWin = txAsc.filter(t=>parseD(t.d) >= start);
+  // baseline balance = balance of last tx before window (or earliest balance)
+  const before = txAsc.filter(t=>parseD(t.d) < start);
+  const baselineBal = before.length ? before[before.length-1].bal : (inWin.length? inWin[0].bal - inWin[0].amt : CURRENT_BALANCE);
+  const endBal = txAsc[txAsc.length-1].bal;
+  const delta = endBal - baselineBal;
+  const moneyIn = inWin.filter(t=>t.amt>0).reduce((s,t)=>s+t.amt,0);
+  const moneyOut = inWin.filter(t=>t.amt<0).reduce((s,t)=>s+Math.abs(t.amt),0);
+  return {start, end:lastDate, inWin, baselineBal, endBal, delta, moneyIn, moneyOut};
+}
+
+/* ---------------- line chart (balance) ---------------- */
+function smoothPath(pts){
+  if(pts.length<2) return pts.length? `M${pts[0].x},${pts[0].y}`:'';
+  let d = `M${pts[0].x},${pts[0].y}`;
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[i-1]||pts[i], p1=pts[i], p2=pts[i+1], p3=pts[i+2]||p2;
+    const c1x=p1.x+(p2.x-p0.x)/6, c1y=p1.y+(p2.y-p0.y)/6;
+    const c2x=p2.x-(p3.x-p1.x)/6, c2y=p2.y-(p3.y-p1.y)/6;
+    d+=` C${c1x},${c1y} ${c2x},${c2y} ${p2.x},${p2.y}`;
+  }
+  return d;
+}
+function drawLine(days){
+  const w=320,h=130,padT=12,padB=14;
+  const {start,inWin,baselineBal,delta} = windowData(days);
+  // series: baseline at window start + each tx point
+  const series = [{t:start.getTime(), bal:baselineBal}, ...inWin.map(t=>({t:parseD(t.d).getTime(), bal:t.bal}))];
+  const t0=start.getTime(), t1=lastDate.getTime();
+  const span = Math.max(1, t1-t0);
+  const bals = series.map(s=>s.bal);
+  let min=Math.min(...bals), max=Math.max(...bals);
+  const range = (max-min)||1; min-=range*0.18; max+=range*0.18;
+  const X = t => 4 + ( (t-t0)/span )*(w-8);
+  const Y = b => padT + (1-(b-min)/(max-min))*(h-padT-padB);
+  const pts = series.map(s=>({x:X(s.t), y:Y(s.bal)}));
+  const up = delta>=0;
+  const col = up? 'var(--up)':'var(--down)';
+  const path = smoothPath(pts);
+  const area = path + ` L${pts[pts.length-1].x},${h} L${pts[0].x},${h} Z`;
+  const last = pts[pts.length-1];
+  const gid = 'g'+days;
+  document.getElementById('lineChart').innerHTML = `
+    <defs>
+      <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${up?'#16A34A':'#DC2626'}" stop-opacity="0.20"/>
+        <stop offset="100%" stop-color="${up?'#16A34A':'#DC2626'}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${area}" fill="url(#${gid})"/>
+    <path d="${path}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"
+          style="stroke-dasharray:1400;stroke-dashoffset:1400;animation:draw .9s ease forwards"/>
+    <circle cx="${last.x}" cy="${last.y}" r="4.5" fill="${col}"/>
+    <circle cx="${last.x}" cy="${last.y}" r="9" fill="${col}" opacity="0.18"/>
+    <style>@keyframes draw{to{stroke-dashoffset:0}}</style>`;
+  const fmt = d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  document.getElementById('balRangeLbl').textContent = fmt(start)+' – '+fmt(lastDate);
+  document.getElementById('balDot').style.background = col;  // legend dot tracks the trend colour
+}
+
+/* ---------------- bar chart (spend buckets) ---------------- */
+function drawBars(days){
+  const w=320,h=120,padB=2,top=8;
+  const {start, inWin, moneyOut} = windowData(days);
+  const t0=start.getTime(), t1=lastDate.getTime()+MS_DAY;
+  const N=6, span=(t1-t0)/N;
+  const buckets = Array.from({length:N},(_,i)=>({out:0, mid:new Date(t0+span*(i+0.5))}));
+  inWin.filter(t=>t.amt<0).forEach(t=>{
+    let idx = Math.floor((parseD(t.d).getTime()-t0)/span);
+    idx=Math.max(0,Math.min(N-1,idx));
+    buckets[idx].out += Math.abs(t.amt);
+  });
+  const max=Math.max(1,...buckets.map(b=>b.out));
+  const bw=(w/N)*0.56, gap=(w/N);
+  let bars='';
+  buckets.forEach((b,i)=>{
+    const bh=(b.out/max)*(h-top-padB);
+    const x=i*gap+(gap-bw)/2;
+    const y=h-padB-bh;
+    bars+=`<rect x="${x}" y="${h-padB}" width="${bw}" height="0" rx="4" fill="${b.out?'#FF5F03':'#E7E9E2'}" opacity="${b.out?0.9:0.6}">
+      <animate attributeName="height" from="0" to="${Math.max(bh,2)}" dur="0.6s" begin="${i*0.06}s" fill="freeze" calcMode="spline" keySplines="0.22 1 0.36 1" keyTimes="0;1"/>
+      <animate attributeName="y" from="${h-padB}" to="${Math.max(y,h-padB-2)}" dur="0.6s" begin="${i*0.06}s" fill="freeze" calcMode="spline" keySplines="0.22 1 0.36 1" keyTimes="0;1"/>
+    </rect>`;
+  });
+  document.getElementById('barChart').innerHTML = bars;
+  // labels
+  const fmt = days<=30 ? d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})
+                       : d=>d.toLocaleDateString('en-GB',{month:'short'});
+  document.getElementById('barLabels').innerHTML =
+    [buckets[0],buckets[2],buckets[5]].map(b=>`<span>${fmt(b.mid)}</span>`).join('');
+  document.getElementById('spendTotalLbl').textContent = eur(moneyOut);
+}
+
+/* ---------------- recent list ---------------- */
+function renderTxRow(t){
+  const out = t.amt<0;
+  const ref = t.ref && t.ref.length<20 ? t.ref : '';
+  return `<div class="tx">
+    <div class="ic ${out?'out':'in'}">${out?'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>':'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7 7 17M15 17H7V9"/></svg>'}</div>
+    <div class="mid">
+      <div class="t1">${out?'To ':'From '}${t.cp}</div>
+      <div class="t2">${shortDate(t.d)}${ref?' · '+ref:''}</div>
+    </div>
+    <div class="amt">
+      <div class="a1 ${out?'':'in'}">${out?'−':'+'}${eur(t.amt)}</div>
+      <div class="a2">${eur(t.bal)}</div>
+    </div>
+  </div>`;
+}
+function renderRecent(){
+  document.getElementById('recentList').innerHTML = txDesc.slice(0,5).map(renderTxRow).join('');
+}
+function renderActivity(filter=''){
+  const f=filter.trim().toLowerCase();
+  const list = txDesc.filter(t=> !f || t.cp.toLowerCase().includes(f) || (t.ref||'').toLowerCase().includes(f));
+  let html='', curMonth='';
+  if(!list.length){ html='<div style="text-align:center;color:var(--faint);padding:40px;font-size:14px;">No matches</div>'; }
+  list.forEach(t=>{
+    const mk=monthKey(t.d);
+    if(mk!==curMonth){ if(curMonth) html+='</div>'; html+=`<div class="month-head">${mk}</div><div class="tx-list">`; curMonth=mk; }
+    html+=renderTxRow(t);
+  });
+  if(curMonth) html+='</div>';
+  document.getElementById('activityList').innerHTML = html;
+}
+
+/* ---------------- insights ---------------- */
+function renderInsights(days){
+  const {inWin, moneyIn, moneyOut} = windowData(days);
+  document.getElementById('statIn').textContent = eur(moneyIn,0);
+  document.getElementById('statOut').textContent = eur(moneyOut,0);
+
+  // categories (outgoing only)
+  const cats={};
+  inWin.filter(t=>t.amt<0).forEach(t=>{ const c=catOf(t.cp); cats[c]=(cats[c]||0)+Math.abs(t.amt); });
+  const entries=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  const total=entries.reduce((s,e)=>s+e[1],0)||1;
+
+  // donut
+  let off=0, donut='';
+  const R=15.9155, C=2*Math.PI*R;
+  entries.forEach(([name,val])=>{
+    const frac=val/total, len=frac*C;
+    donut+=`<circle cx="18" cy="18" r="${R}" fill="none" stroke="${CAT_COLOR[name]||'#999'}" stroke-width="4.4"
+      stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 18 18)"
+      style="transition:stroke-dasharray .8s ease"/>`;
+    off+=len;
+  });
+  if(!entries.length) donut=`<circle cx="18" cy="18" r="${R}" fill="none" stroke="#E7E9E2" stroke-width="4.4"/>`;
+  document.getElementById('donut').innerHTML=donut;
+  document.getElementById('donutTotal').textContent=eur(total,0);
+
+  // legend
+  document.getElementById('legend').innerHTML = entries.map(([name,val])=>`
+    <div class="leg"><span class="sw" style="background:${CAT_COLOR[name]}"></span>
+      <span class="ln">${name}</span><span class="lp">${Math.round(val/total*100)}%</span></div>`).join('')
+    || '<div style="color:var(--faint);font-size:13px;">No spending in this period</div>';
+
+  // category bars
+  document.getElementById('catBars').innerHTML = entries.map(([name,val])=>`
+    <div class="catbar">
+      <div class="crow"><span class="cname">${name}</span><span class="camt">${eur(val,0)}</span></div>
+      <div class="track"><i style="width:${Math.round(val/total*100)}%;background:${CAT_COLOR[name]}"></i></div>
+    </div>`).join('') || '<div style="color:var(--faint);font-size:13px;padding:4px 2px;">No spending in this period</div>';
+
+  // top counterparties (outgoing)
+  const byCp={};
+  inWin.filter(t=>t.amt<0).forEach(t=>{ byCp[t.cp]=(byCp[t.cp]||0)+Math.abs(t.amt); });
+  const cpEntries=Object.entries(byCp).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('topCp').innerHTML = cpEntries.map(([cp,val])=>`
+    <div class="tx">
+      <div class="ic out" style="background:${CAT_COLOR[catOf(cp)]}1a;color:${CAT_COLOR[catOf(cp)]}">${initials(cp)}</div>
+      <div class="mid"><div class="t1">${cp}</div><div class="t2">${catOf(cp)}</div></div>
+      <div class="amt"><div class="a1">${eur(val)}</div></div>
+    </div>`).join('') || '<div style="text-align:center;color:var(--faint);padding:24px;font-size:13px;">No outgoing payments</div>';
+}
+
+/* ---------------- master render for a period ---------------- */
+let curDays = parseInt(store.get('bankPeriod','30'),10);
+const periodName = d=>({7:'7 days',30:'30 days',91:'3 months',183:'6 months'}[d]||d+'d');
+
+function renderHome(days){
+  const {delta} = windowData(days);
+  const up = delta>=0;
+  const balEl=document.getElementById('balanceNum');
+  // the balance is your CURRENT available money — it never depends on the period,
+  // and it's always positive, so it keeps ONE fixed "money" colour (green).
+  // the trend signal lives on the balance GRAPH (line + legend dot recolour green↑/red↓)
+  // and the delta pill below the number — never on the headline number itself.
+  balEl.className='balance';
+  animateNumber(balEl, CURRENT_BALANCE);   // counts up 0→balance on first load; stays put on period switches
+  const chip=document.getElementById('deltaChip');
+  chip.className='delta '+(up?'up':'down');
+  chip.querySelector('.arrow').textContent = up?'▲':'▼';
+  animateDelta(document.getElementById('deltaVal'), delta);  // this is what animates on every switch
+  document.getElementById('deltaPeriod').textContent = '· '+periodName(days);
+  drawLine(days);
+  drawBars(days);
+}
+
+function setPeriod(days){
+  curDays=days;
+  store.set('bankPeriod', days);
+  // sync both segments
+  document.querySelectorAll('#segment .seg-btn, #segment2 .seg-btn').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.dataset.days)===days);
+  });
+  moveThumb('segThumb','segment',days);
+  moveThumb('segThumb2','segment2',days);
+  renderHome(days);
+  renderInsights(days);
+}
+function moveThumb(thumbId, segId, days){
+  const idx=[7,30,91,183].indexOf(days);
+  document.getElementById(thumbId).style.transform=`translateX(${idx*100}%)`;
+}
+
+/* ---------------- tabs ---------------- */
+function setTab(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active', p.id==='page-'+name));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  document.getElementById('scrollbody').scrollTop=0;
+  store.set('bankTab', name);
+}
+
+/* ---------------- wire up ---------------- */
+document.querySelectorAll('#segment .seg-btn, #segment2 .seg-btn').forEach(b=>{
+  b.addEventListener('click',()=>setPeriod(parseInt(b.dataset.days)));
+});
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setTab(t.dataset.tab)));
+document.querySelectorAll('[data-goto]').forEach(a=>a.addEventListener('click',()=>setTab(a.dataset.goto)));
+document.getElementById('searchInput').addEventListener('input',e=>renderActivity(e.target.value));
+
+/* ---------------- statement totals (EUR base) ---------------- */
+const allIn=TX.filter(t=>t.amt>0).reduce((s,t)=>s+t.amt,0);
+const allOut=TX.filter(t=>t.amt<0).reduce((s,t)=>s+Math.abs(t.amt),0);
+
+/* ---------------- currency-aware re-render of every screen ---------------- */
+function renderCurrencyStatics(){
+  document.getElementById('cardBal').textContent = eur(CURRENT_BALANCE);
+  document.getElementById('cardTotalIn').textContent = eur(allIn,0);
+  document.getElementById('cardTotalOut').textContent = eur(allOut,0);
+  document.getElementById('whoBalLabel').textContent = CURRENCY+' balance';
+  document.getElementById('curPillCode').textContent = CURRENCY;
+}
+function refreshAll(){
+  renderCurrencyStatics();
+  renderRecent();
+  renderActivity(document.getElementById('searchInput').value||'');
+  setPeriod(curDays);   // re-renders home (animated balance) + insights for the active period
+}
+
+/* ---------------- currency sheet ---------------- */
+const scrim=document.getElementById('curScrim');
+let draftCur=CURRENCY, draftRates={...RATES};
+
+function buildSheet(){
+  // currency options
+  document.getElementById('curGrid').innerHTML = Object.entries(CUR_META).map(([code,m])=>`
+    <div class="cur-opt ${code===draftCur?'active':''}" data-cur="${code}">
+      <span class="sym">${m.symbol}</span>
+      <span><span class="cc">${code}</span><span class="cn">${m.name}</span></span>
+    </div>`).join('');
+  document.querySelectorAll('.cur-opt').forEach(o=>o.addEventListener('click',()=>{
+    draftCur=o.dataset.cur;
+    document.querySelectorAll('.cur-opt').forEach(x=>x.classList.toggle('active',x===o));
+  }));
+  // editable rates (EUR locked at 1)
+  document.getElementById('ratesList').innerHTML = Object.keys(CUR_META).map(code=>{
+    const locked = code==='EUR';
+    return `<div class="rate-row ${locked?'locked':''}">
+      <span class="rl"><span class="rsym">${CUR_META[code].symbol}</span>1 EUR = ${locked?'<span class="lockwd">base currency</span>':code}</span>
+      <input type="number" inputmode="decimal" step="0.0001" min="0" data-rate="${code}"
+        value="${draftRates[code]}" ${locked?'disabled':''}>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('input[data-rate]').forEach(inp=>inp.addEventListener('input',()=>{
+    const v=parseFloat(inp.value); if(!isNaN(v)&&v>0) draftRates[inp.dataset.rate]=v;
+  }));
+}
+function openSheet(){ draftCur=CURRENCY; draftRates={...RATES}; buildSheet(); scrim.classList.add('open'); }
+function closeSheet(){ scrim.classList.remove('open'); }
+
+document.getElementById('curBtn').addEventListener('click',openSheet);
+document.getElementById('curClose').addEventListener('click',closeSheet);
+scrim.addEventListener('click',e=>{ if(e.target===scrim) closeSheet(); });
+document.getElementById('ratesReset').addEventListener('click',()=>{ draftRates={...DEFAULT_RATES}; buildSheet(); });
+document.getElementById('ratesSave').addEventListener('click',()=>{
+  CURRENCY=draftCur; RATES={...draftRates}; RATES.EUR=1;
+  store.set('bankCurrency',CURRENCY);
+  store.set('bankRates',JSON.stringify(RATES));
+  closeSheet();
+  refreshAll();
+});
+
+/* statement period — derived from the re-anchored first→last transaction dates */
+(function(){
+  const fmt = d=>d.toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+  document.getElementById('stmtPeriod').textContent =
+    fmt(parseD(txAsc[0].d))+' – '+fmt(lastDate);
+})();
+
+/* init */
+renderCurrencyStatics();
+renderRecent();
+renderActivity();
+setTab(store.get('bankTab','home'));
+setPeriod([7,30,91,183].includes(curDays)?curDays:30);
+</script>
+</body>
+</html>
