@@ -1120,6 +1120,7 @@ document.getElementById('exportScrim').addEventListener('click',e=>{ if(e.target
 document.getElementById('exportGo').addEventListener('click',()=>{ closeExport(); setTimeout(()=>exportStatement(exportDays),320); });
 
 function exportStatement(days){
+  const today = new Date();
   const start=new Date(today);start.setDate(start.getDate()-days);
   const inWin = TX.filter(t=>{const td=parseD(t.d); return td>=start&&td<=today;});
   const longD = s=>parseD(s).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
