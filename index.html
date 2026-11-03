@@ -1120,6 +1120,7 @@ document.getElementById('exportScrim').addEventListener('click',e=>{ if(e.target
 document.getElementById('exportGo').addEventListener('click',()=>{ closeExport(); setTimeout(()=>exportStatement(exportDays),320); });
 
 function exportStatement(days){
+  try{
   const today = new Date();
   const start=new Date(today);start.setDate(start.getDate()-days);
   const inWin = TX.filter(t=>{const td=parseD(t.d); return td>=start&&td<=today;});
@@ -1178,6 +1179,10 @@ function exportStatement(days){
       element.style.display='none';
     });
   }, 150);
+  } catch(e){
+    console.error('Export error:', e);
+    alert('Export failed: '+e.message);
+  }
 }
 
 /* statement period — derived from the re-anchored first→last transaction dates */
