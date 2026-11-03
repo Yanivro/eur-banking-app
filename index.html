@@ -1164,14 +1164,16 @@ function exportStatement(days){
     </div>`;
   const filename=`wise-statement-${CURRENCY}-${start.toISOString().slice(0,10)}_to_${today.toISOString().slice(0,10)}.pdf`;
   const element = document.getElementById('printRoot');
-  const opt = {
-    margin: 10,
-    filename: filename,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
-  };
-  html2pdf().set(opt).from(element).save();
+  setTimeout(()=>{
+    const opt = {
+      margin: 10,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, logging: false },
+      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+    html2pdf().set(opt).from(element).save();
+  }, 100);
 }
 
 /* statement period — derived from the re-anchored first→last transaction dates */
