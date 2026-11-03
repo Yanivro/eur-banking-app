@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   :root{
     --bg:#F6F7F4;
@@ -362,6 +363,38 @@
     .body{ padding-top:env(safe-area-inset-top); }
     .tabbar{ height:calc(84px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); }
   }
+
+  /* ---------- period grid ---------- */
+  .per-grid{ display:grid; gap:12px; margin-bottom:16px; }
+  .per-opt{ padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface); cursor:pointer; text-align:center; font-family:var(--font); font-size:14px; font-weight:500; }
+  .per-opt.active{ border-color:var(--primary); background:var(--primary); color:var(--surface); }
+
+  /* ---------- print statement ---------- */
+  #printRoot{ display:none; padding:20px; font-family:var(--font); font-size:11px; }
+  #printRoot .ps-top{ display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #0E1A1A; padding-bottom:12px; margin-bottom:14px; }
+  #printRoot .ps-brand{ font-weight:700; font-size:14px; color:#0E1A1A; letter-spacing:-0.01em; }
+  #printRoot .ps-brand small{ display:block; font-weight:500; font-size:9px; color:#5E6E6A; letter-spacing:.04em; margin-top:2px; }
+  #printRoot .ps-meta{ text-align:right; font-size:10px; color:#5E6E6A; }
+  #printRoot .ps-meta b{ color:#0E1A1A; }
+  #printRoot .ps-acct{ display:grid; grid-template-columns:1fr 1fr; gap:4px 20px; margin-bottom:14px; }
+  #printRoot .ps-acct .row{ display:flex; justify-content:space-between; border-bottom:1px solid #E7E9E2; padding:4px 0; }
+  #printRoot .ps-acct .k{ color:#5E6E6A; }
+  #printRoot .ps-acct .v{ font-weight:600; }
+  #printRoot .ps-summary{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+  #printRoot .ps-summary .box{ border:1px solid #E7E9E2; border-radius:6px; padding:8px 10px; }
+  #printRoot .ps-summary .box .k{ font-size:8px; text-transform:uppercase; letter-spacing:.05em; color:#5E6E6A; }
+  #printRoot .ps-summary .box .v{ font-weight:700; font-size:13px; margin-top:3px; }
+  #printRoot .ps-summary .box .v.in{ color:#16A34A; }
+  #printRoot .ps-summary .box .v.out{ color:#0E1A1A; }
+  #printRoot table{ width:100%; border-collapse:collapse; margin:12px 0; }
+  #printRoot th{ text-align:left; border-bottom:1px solid #0E1A1A; padding:6px 0; font-weight:600; }
+  #printRoot td{ padding:5px 0; border-bottom:1px solid #E7E9E2; }
+  #printRoot td.num{ text-align:right; font-family:var(--mono); }
+  #printRoot .amt-in{ color:#16A34A; }
+  #printRoot .amt-out{ color:#0E1A1A; }
+  #printRoot .desc{ font-weight:500; }
+  #printRoot .sub{ font-size:9px; color:#5E6E6A; margin-top:1px; }
+  #printRoot .ps-foot{ font-size:9px; color:#5E6E6A; margin-top:12px; border-top:1px solid #E7E9E2; padding-top:8px; }
 </style>
 </head>
 <body>
@@ -446,7 +479,12 @@
 
       <!-- ============ ACTIVITY ============ -->
       <section class="page" id="page-activity">
-        <div class="apphead"><h2 style="font-size:22px;font-weight:700;letter-spacing:-0.02em;">Activity</h2></div>
+        <div class="apphead" style="justify-content:space-between;">
+          <h2 style="font-size:22px;font-weight:700;letter-spacing:-0.02em;">Activity</h2>
+          <button class="iconbtn" id="exportBtn" aria-label="Export statement to PDF">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+          </button>
+        </div>
         <div class="search">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
           <input id="searchInput" placeholder="Search transactions, people…">
@@ -576,11 +614,31 @@
       </div>
     </div>
 
+    <!-- ============ EXPORT SHEET ============ -->
+    <div class="sheet-scrim" id="exportScrim">
+      <div class="sheet">
+        <div class="sheet-grip"></div>
+        <div class="sheet-head">
+          <h3>Export statement</h3>
+          <button class="sheet-x" id="exportClose" aria-label="Close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <p class="sheet-sub">A PDF with your account details and every transaction in the chosen window, in the selected currency.</p>
+        <div class="per-grid" id="perGrid"></div>
+        <div class="sheet-actions">
+          <button class="btn-solid" id="exportGo" style="flex:1">Download PDF</button>
+        </div>
+      </div>
+    </div>
+
     <div class="home-indicator"></div>
   </div>
 </div>
 
 <div class="hint">Your balance is today's money — it stays put. The <b>7D / 30D / 3M / 6M</b> toggle just changes how far back you look</div>
+
+<div id="printRoot"></div>
 
 <script>
 /* ---------------- real statement data (Wise EUR, Jun–Dec 2025) ---------------- */
@@ -1040,6 +1098,81 @@ document.getElementById('ratesSave').addEventListener('click',()=>{
   closeSheet();
   refreshAll();
 });
+
+/* export functionality */
+let exportDays=curDays;
+const PERIODS=[{d:7,t:'7D',n:'Last 7 days'},{d:30,t:'30D',n:'Last 30 days'},{d:91,t:'3M',n:'Last 3 months'},{d:183,t:'6M',n:'Last 6 months'}];
+function buildPerGrid(){
+  document.getElementById('perGrid').innerHTML = PERIODS.map(p=>{
+    const style=p.d===exportDays?'background:var(--primary);border-color:var(--primary);color:var(--surface)':'';
+    return `<button class="per-opt ${p.d===exportDays?'active':''}" data-d="${p.d}" style="${style}">${p.n}</button>`;
+  }).join('');
+  document.querySelectorAll('.per-opt').forEach(o=>o.addEventListener('click',()=>{
+    exportDays=parseInt(o.dataset.d);
+    buildPerGrid();
+  }));
+}
+function openExport(){ exportDays=curDays; buildPerGrid(); document.getElementById('exportScrim').classList.add('open'); }
+function closeExport(){ document.getElementById('exportScrim').classList.remove('open'); }
+document.getElementById('exportBtn').addEventListener('click',openExport);
+document.getElementById('exportClose').addEventListener('click',closeExport);
+document.getElementById('exportScrim').addEventListener('click',e=>{ if(e.target===document.getElementById('exportScrim')) closeExport(); });
+document.getElementById('exportGo').addEventListener('click',()=>{ closeExport(); setTimeout(()=>exportStatement(exportDays),320); });
+
+function exportStatement(days){
+  const start=new Date(today);start.setDate(start.getDate()-days);
+  const inWin = TX.filter(t=>{const td=parseD(t.d); return td>=start&&td<=today;});
+  const longD = s=>parseD(s).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  const rows=[...inWin].sort((a,b)=>parseD(b.d)-parseD(a.d)).map(t=>{
+    const out=t.amt<0;
+    return `<tr>
+      <td class="num" style="text-align:left">${longD(t.d)}</td>
+      <td><div class="desc">${t.cp}</div><div class="sub">${t.ref}</div></td>
+      <td class="num ${out?'amt-out':'amt-in'}">${out?'−':'+'}${money(Math.abs(t.amt))}</td>
+      <td class="num">${money(t.bal)}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="4" style="padding:10px;text-align:center;color:#5E6E6A">No transactions in this window.</td></tr>`;
+  const periodLabel=(PERIODS.find(p=>p.d===days)||{n:days+' days'}).n;
+  const gen=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const baselineBal = inWin.length ? inWin[inWin.length-1].bal - inWin[inWin.length-1].amt : CURRENT_BALANCE;
+  const moneyIn = inWin.filter(t=>t.amt>0).reduce((s,t)=>s+t.amt,0);
+  const moneyOut = Math.abs(inWin.filter(t=>t.amt<0).reduce((s,t)=>s+t.amt,0));
+  const endBal = inWin.length ? inWin[0].bal : CURRENT_BALANCE;
+  document.getElementById('printRoot').innerHTML = `
+    <div class="ps-top">
+      <div class="ps-brand">Wise EUR<small>MULTI-CURRENCY · AUSTRALIA</small></div>
+      <div class="ps-meta">Statement generated<br><b>${gen}</b><br>Currency: <b>${CURRENCY}</b></div>
+    </div>
+    <div class="ps-acct">
+      <div class="row"><span class="k">Account holder</span><span class="v">Yaniv Rozenblat</span></div>
+      <div class="row"><span class="k">Period</span><span class="v">${periodLabel}</span></div>
+      <div class="row"><span class="k">IBAN</span><span class="v">DE89370400440532013000</span></div>
+      <div class="row"><span class="k">Range</span><span class="v">${longD(start)} – ${longD(today)}</span></div>
+    </div>
+    <div class="ps-summary">
+      <div class="box"><div class="k">Opening balance</div><div class="v">${money(baselineBal)}</div></div>
+      <div class="box"><div class="k">Money in</div><div class="v in">${money(moneyIn)}</div></div>
+      <div class="box"><div class="k">Money out</div><div class="v out">${money(moneyOut)}</div></div>
+      <div class="box"><div class="k">Closing balance</div><div class="v">${money(endBal)}</div></div>
+    </div>
+    <table>
+      <thead><tr><th>Date</th><th>Description</th><th class="num">Amount</th><th class="num">Balance</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="ps-foot">
+      Generated from the Wise app for personal reference. Amounts shown in ${CURRENCY}; balances are held in EUR and converted at the rates set in the app. Not an official bank document.
+    </div>`;
+  const filename=`wise-statement-${CURRENCY}-${start.toISOString().slice(0,10)}_to_${today.toISOString().slice(0,10)}.pdf`;
+  const element = document.getElementById('printRoot');
+  const opt = {
+    margin: 10,
+    filename: filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+  };
+  html2pdf().set(opt).from(element).save();
+}
 
 /* statement period — derived from the re-anchored first→last transaction dates */
 (function(){
